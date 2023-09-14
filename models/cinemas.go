@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -36,15 +34,4 @@ type ScreenFormat struct {
 	gorm.Model
 	ScreenType  string `json:"screen_type" gorm:"not null"`
 	SoundSystem string `json:"sound_system" gorm:"not null"`
-}
-
-type Shows struct {
-	gorm.Model
-	ScreenId uint   `json:"screen_id" gorm:"not null"`
-	Screen   Screen `gorm:"ForeignKey:ScreenId"`
-	MovieId  uint   `json:"movie_id" gorm:"not null"`
-	Movie    Movies `gorm:"ForeignKey:MovieId"`
-	BaseFare uint   `json:"base_fare" gorm:"not null"`
-	Time     time.Time
-	Status   string `josn:"status" gorm:"not null"`
 }

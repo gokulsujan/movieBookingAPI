@@ -18,6 +18,7 @@ type Manager struct {
 }
 
 type User struct {
+	gorm.Model
 	FirstName  string `json:"first_name" gorm:"not null" validate:"required,min=2,max=50"`
 	SecondName string `json:"second_name" gorm:"not null" validate:"required,min=1,max=50"`
 	Email      string `json:"email" gorm:"not null"`
