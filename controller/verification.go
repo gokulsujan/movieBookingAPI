@@ -1,11 +1,16 @@
 package controller
 
 import (
+	"context"
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"net/smtp"
 	"os"
 	"strconv"
+	"theatreManagementApp/config"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Getting the otp and sending the otp to the user
@@ -36,5 +41,21 @@ func sendOtp(name, otp, email string) {
 	err := smtp.SendMail("smtp.gmail.com:587", auth, SMTPemail, []string{email}, []byte(msg))
 	if err != nil {
 		panic(err)
+	}
+}
+
+func verifyOTP(superkey, otpInput string, c *gin.Context) bool {
+	//otp verification in reddis
+	otp, err := config.ReddisClient.Get(context.Background(), superkey).Result()
+	if err != nil {
+		fmt.Println("Error retrieving data from Redis:", err)
+		return false
+	} else {
+		if otp == otpInput {
+			return true
+		} else {
+			fmt.Println(otp)
+			return false
+		}
 	}
 }
