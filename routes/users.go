@@ -11,5 +11,6 @@ func UserRoutes(c *gin.Engine) {
 	{
 		User.POST("/signup", controller.UserSignUp)
 		User.POST("/signup-verification", controller.SignupVerification)
+		User.POST("/login", controller.Userlogin)
 	}
 }

@@ -3,8 +3,8 @@ package controller
 import (
 	"context"
 	"crypto/rand"
-	"fmt"
 	"math/big"
+	"net/http"
 	"net/smtp"
 	"os"
 	"strconv"
@@ -19,7 +19,8 @@ func GetOTP(name, email string) string {
 	if err != nil {
 		panic(err)
 	}
-	sendOtp(name, otp, email)
+	msg := "Subject: WebPortal OTP\nHey " + name + "Your OTP is " + otp
+	sendEmail(name, msg, email)
 	return otp
 }
 
@@ -33,11 +34,10 @@ func getRandNum() (string, error) {
 }
 
 // sending generated otp to the user mail using smtp
-func sendOtp(name, otp, email string) {
+func sendEmail(name, msg, email string) {
 	SMTPemail := os.Getenv("Email")
 	pass := os.Getenv("pass")
 	auth := smtp.PlainAuth("", SMTPemail, pass, "smtp.gmail.com")
-	msg := "Subject: WebPortal OTP\nHey " + name + "Your OTP is " + otp
 	err := smtp.SendMail("smtp.gmail.com:587", auth, SMTPemail, []string{email}, []byte(msg))
 	if err != nil {
 		panic(err)
@@ -48,13 +48,17 @@ func verifyOTP(superkey, otpInput string, c *gin.Context) bool {
 	//otp verification in reddis
 	otp, err := config.ReddisClient.Get(context.Background(), superkey).Result()
 	if err != nil {
-		fmt.Println("Error retrieving data from Redis:", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Error retrieving data from Redis"})
 		return false
 	} else {
 		if otp == otpInput {
+			err := config.ReddisClient.Del(context.Background(), superkey).Err()
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Error deleting otp from Redis"})
+				return false
+			}
 			return true
 		} else {
-			fmt.Println(otp)
 			return false
 		}
 	}

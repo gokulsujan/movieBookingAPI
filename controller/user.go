@@ -18,6 +18,12 @@ type otpCredentials struct {
 	Otp   string `json:"otp"`
 }
 
+type loginCredentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// User signup module
 func UserSignUp(c *gin.Context) {
 	inputField := models.User{}
 	if err := c.ShouldBindJSON(&inputField); err != nil {
@@ -77,6 +83,7 @@ func UserSignUp(c *gin.Context) {
 	c.JSON(http.StatusAccepted, gin.H{"messsage": "Go to user/signup-verification"})
 }
 
+// user creation after email verification
 func SignupVerification(c *gin.Context) {
 	var otpCred otpCredentials
 	if err := c.ShouldBindJSON(&otpCred); err != nil {
@@ -108,4 +115,27 @@ func SignupVerification(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid OTP"})
 	}
+}
+
+// user login module
+func Userlogin(c *gin.Context) {
+	var logincred loginCredentials
+	if err := c.ShouldBindJSON(&logincred); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to bind json data"})
+	}
+	var user models.User
+	result := config.DB.First(&user, "username = ? OR email = ? OR phone = ?", logincred.Username, logincred.Username, logincred.Username)
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid Credentials"})
+		return
+	}
+	hashedPass := []byte(user.Password)
+	err := bcrypt.CompareHashAndPassword(hashedPass, []byte(logincred.Password))
+	if err != nil {
+		// Passwords do not match
+		c.JSON(http.StatusUnauthorized, gin.H{"Message": "Invalid password"})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"message": "Login done"})
 }
