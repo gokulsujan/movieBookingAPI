@@ -48,13 +48,13 @@ func verifyOTP(superkey, otpInput string, c *gin.Context) bool {
 	//otp verification in reddis
 	otp, err := config.ReddisClient.Get(context.Background(), superkey).Result()
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Error retrieving data from Redis"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Error retrieving data from Redis"})
 		return false
 	} else {
 		if otp == otpInput {
 			err := config.ReddisClient.Del(context.Background(), superkey).Err()
 			if err != nil {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Error deleting otp from Redis"})
+				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Error deleting otp from Redis"})
 				return false
 			}
 			return true
