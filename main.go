@@ -1,6 +1,11 @@
 package main
 
-import "theatreManagementApp/config"
+import (
+	"theatreManagementApp/config"
+	"theatreManagementApp/routes"
+
+	"github.com/gin-gonic/gin"
+)
 
 func init() {
 	config.LoadEnvVariables()
@@ -8,5 +13,8 @@ func init() {
 }
 
 func main() {
+	r := gin.Default()
 
+	routes.UserRoutes(r)
+	r.Run()
 }
