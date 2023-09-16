@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
@@ -51,8 +53,14 @@ func UserSignUp(c *gin.Context) {
 	//generating otp and sending it to user
 	Otp := GetOTP(inputField.FirstName, inputField.Email)
 
+	jsonData, err := json.Marshal(inputField)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return
+	}
+
 	//inserting the data into reddis
-	config.ReddisClient.Set(context.Background(), "signUpData"+inputField.Email, inputField, 0)
+	config.ReddisClient.Set(context.Background(), "signUpData"+inputField.Email, jsonData, 0)
 
 	//inserting the otp into reddis
 	config.ReddisClient.Set(context.Background(), "signUpOTP"+inputField.Email, Otp, 0)
@@ -74,8 +82,14 @@ func SignupVerification(c *gin.Context) {
 	}
 
 	if verifyOTP("signUpOTP"+otpCred.Email, otpCred.Otp, c) {
+		superKey := "signUpData" + otpCred.Email
+		data, err := config.ReddisClient.Get(context.Background(), superKey).Result()
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
+			return
+		}
 		// inputField := models.User{}
-		c.JSON(http.StatusAccepted, gin.H{"message": "Otp Verification done"})
+		c.JSON(http.StatusAccepted, gin.H{"message": "Otp Verification done" + data})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid OTP"})
 	}
