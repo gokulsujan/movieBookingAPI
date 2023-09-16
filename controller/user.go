@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -59,19 +60,21 @@ func UserSignUp(c *gin.Context) {
 		return
 	}
 
-	//inserting the data into reddis
-	config.ReddisClient.Set(context.Background(), "signUpData"+inputField.Email, jsonData, 0)
-
 	//inserting the otp into reddis
-	config.ReddisClient.Set(context.Background(), "signUpOTP"+inputField.Email, Otp, 0)
+	err = config.ReddisClient.Set(context.Background(), "signUpOTP"+inputField.Email, Otp, 1*time.Minute).Err()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error inserting otp in redis client"})
+		return
+	}
+
+	//inserting the data into reddis
+	err = config.ReddisClient.Set(context.Background(), "userData"+inputField.Email, jsonData, 1*time.Minute).Err()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error inserting user data in redis client"})
+		return
+	}
 
 	c.JSON(http.StatusAccepted, gin.H{"messsage": "Go to user/signup-verification"})
-	// result := config.DB.Create(&inputField)
-	// if result.Error != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"Error": result.Error})
-	// 	return
-	// }
-	// c.JSON(http.StatusAccepted, gin.H{"success": "Data inserted into to the userdb"})
 }
 
 func SignupVerification(c *gin.Context) {
@@ -82,14 +85,26 @@ func SignupVerification(c *gin.Context) {
 	}
 
 	if verifyOTP("signUpOTP"+otpCred.Email, otpCred.Otp, c) {
-		superKey := "signUpData" + otpCred.Email
-		data, err := config.ReddisClient.Get(context.Background(), superKey).Result()
+		var userData models.User
+		superKey := "userData" + otpCred.Email
+		jsonData, err := config.ReddisClient.Get(context.Background(), superKey).Result()
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error getting user data from redis client"})
 			return
 		}
-		// inputField := models.User{}
-		c.JSON(http.StatusAccepted, gin.H{"message": "Otp Verification done" + data})
+		err = json.Unmarshal([]byte(jsonData), &userData)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error binding reddis json data to user variable"})
+			return
+		} else {
+			result := config.DB.Create(&userData)
+			if result.Error != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"Error": result.Error})
+				return
+			}
+		}
+
+		c.JSON(http.StatusAccepted, gin.H{"message": "Otp Verification success. User creation done"})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid OTP"})
 	}

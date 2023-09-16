@@ -8,6 +8,6 @@ import (
 
 var ReddisClient = redis.NewClient(&redis.Options{
 	Addr:     os.Getenv("RedisAddr"),
-	Password: os.Getenv("RedisPass"), // no password set
-	DB:       0,                      // use default DB
+	Password: os.Getenv("RedisPass"),
+	DB:       0,
 })
