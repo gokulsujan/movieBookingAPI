@@ -34,5 +34,6 @@ func AdminRoutes(c *gin.Engine) {
 		//Movie Management
 		Movies := Admin.Group("/movies")
 		Movies.POST("/add", auth.AdminAuth, controller.AddMovies)
+		Movies.PUT("/edit/:id", auth.AdminAuth, controller.EditMovies)
 	}
 }
