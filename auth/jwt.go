@@ -24,23 +24,24 @@ func UserAuth(c *gin.Context) {
 			if token.Method != signMethod {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return os.Getenv("jwtSuperKey"), nil
+			return []byte(os.Getenv("jwtSuperKey")), nil
 		})
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Error parsing token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Error parsing token. The error is: " + err.Error()})
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 		if token.Valid {
 			// Token is valid, proceed with further processing
-			c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "token is valid"})
 			claims, ok := token.Claims.(jwt.MapClaims)
+			fmt.Println(claims["username"])
 			if !ok {
 				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid token"})
 				c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
 			c.Set("username", claims["username"].(string))
+			c.Next()
 			return
 		} else if ve, ok := err.(*jwt.ValidationError); ok {
 			// Check the error type
