@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// City Management
 func AddCity(c *gin.Context) {
 	var city models.City
 
@@ -79,4 +80,27 @@ func DeleteCity(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "City deleted successfully"})
+}
+
+//Cinemas Management
+
+func AddCinemas(c *gin.Context) {
+	var cinemas models.Cinemas
+	search := config.DB.Where(&models.Cinemas{Name: cinemas.Name, CityId: cinemas.CityId}).First(&models.Cinemas{})
+	if search.RowsAffected != 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Cinemas already exists in the city"})
+		return
+	}
+	if err := c.ShouldBindJSON(&cinemas); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+
+	result := config.DB.Create(&cinemas)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas addedd successfully"})
 }
