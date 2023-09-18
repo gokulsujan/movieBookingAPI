@@ -86,13 +86,13 @@ func DeleteCity(c *gin.Context) {
 
 func AddCinemas(c *gin.Context) {
 	var cinemas models.Cinemas
-	search := config.DB.Where(&models.Cinemas{Name: cinemas.Name, CityId: cinemas.CityId}).First(&models.Cinemas{})
-	if search.RowsAffected != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Cinemas already exists in the city"})
-		return
-	}
 	if err := c.ShouldBindJSON(&cinemas); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	search := config.DB.Where("name = ? AND city_id = ?", cinemas.Name, cinemas.CityId).First(&models.Cinemas{})
+	if search.RowsAffected != 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Cinemas already exists in the city"})
 		return
 	}
 
