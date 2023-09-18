@@ -14,7 +14,8 @@ func AdminRoutes(c *gin.Engine) {
 
 		//City Management
 		City := Admin.Group("/city")
-		City.GET("")
+		City.GET("", controller.GetCityList)
 		City.POST("/add", auth.AdminAuth, controller.AddCity)
+		City.PUT("/edit/:id", auth.AdminAuth, controller.EditCity)
 	}
 }
