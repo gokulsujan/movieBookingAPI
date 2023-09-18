@@ -70,3 +70,13 @@ func EditCity(c *gin.Context) {
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "City name updated"})
 
 }
+
+func DeleteCity(c *gin.Context) {
+	id := c.Param("id")
+	result := config.DB.Delete(&models.City{}, id)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "City deleted successfully"})
+}

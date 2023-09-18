@@ -17,5 +17,6 @@ func AdminRoutes(c *gin.Engine) {
 		City.GET("", controller.GetCityList)
 		City.POST("/add", auth.AdminAuth, controller.AddCity)
 		City.PUT("/edit/:id", auth.AdminAuth, controller.EditCity)
+		City.DELETE("/delete/:id", auth.AdminAuth, controller.DeleteCity)
 	}
 }
