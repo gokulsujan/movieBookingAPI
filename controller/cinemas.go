@@ -104,3 +104,23 @@ func AddCinemas(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas addedd successfully"})
 }
+
+func EditCinemas(c *gin.Context) {
+	id := c.Param("id")
+	var cinemas models.Cinemas
+	if err := c.ShouldBindJSON(&cinemas); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	search := config.DB.Where("name = ? AND city_id = ?", cinemas.Name, cinemas.CityId).First(&models.Cinemas{})
+	if search.RowsAffected != 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Cinemas already exists in the city"})
+		return
+	}
+	result := config.DB.Model(&models.Cinemas{}).Where("id = ?", id).Updates(&models.Cinemas{Name: cinemas.Name, CityId: cinemas.CityId, Pincode: cinemas.Pincode})
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas Updated"})
+}
