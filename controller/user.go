@@ -4,24 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
+	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type otpCredentials struct {
 	Email string `json:"email"`
 	Otp   string `json:"otp"`
-}
-
-type loginCredentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
 }
 
 // User signup module
@@ -120,7 +114,7 @@ func SignupVerification(c *gin.Context) {
 
 // user login module
 func Userlogin(c *gin.Context) {
-	var logincred loginCredentials
+	var logincred models.LoginCredentials
 	if err := c.ShouldBindJSON(&logincred); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": "Unable to bind json data"})
 	}
@@ -138,21 +132,14 @@ func Userlogin(c *gin.Context) {
 		return
 	}
 
-	//creating jwt auth token
-	secretKey := []byte(os.Getenv("jwtSuperKey"))
-	token := jwt.New(jwt.SigningMethodHS256) //newtokencreation
-
-	//setting payload for the token
-	claims := token.Claims.(jwt.MapClaims)
-	claims["username"] = user.Username
-	claims["firstName"] = user.FirstName
-	claims["exp"] = time.Now().Add(time.Hour * 2).Unix() //token expiry setting
-
-	//signing the token
-	tokenString, err := token.SignedString(secretKey)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+	if user.Status != "active" {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Not an active user. Contact customercare."})
 		return
+	}
+
+	tokenString, err := auth.CreateToken(user.Username, "user")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "token": tokenString})
