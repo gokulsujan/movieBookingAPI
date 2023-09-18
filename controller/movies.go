@@ -51,3 +51,13 @@ func EditMovies(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Movie updated successfully"})
 }
+
+func DeleteMovies(c *gin.Context) {
+	id := c.Param("id")
+	result := config.DB.Delete(&models.Movies{}, "id = ?", id)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Movie deleted from the records."})
+}
