@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type otpCredentials struct {
@@ -25,7 +24,7 @@ func UserSignUp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": "Unable to bind json"})
 		return
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(inputField.Password), 10)
+	hash, err := PassToHash(inputField.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Status": "False",
@@ -124,9 +123,8 @@ func Userlogin(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid Credentials"})
 		return
 	}
-	hashedPass := []byte(user.Password)
-	err := bcrypt.CompareHashAndPassword(hashedPass, []byte(logincred.Password))
-	if err != nil {
+	passMatch := HashToPass(user.Password, logincred.Password)
+	if passMatch {
 		// Passwords do not match
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid password"})
 		return
