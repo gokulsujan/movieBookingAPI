@@ -124,3 +124,13 @@ func EditCinemas(c *gin.Context) {
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas Updated"})
 }
+
+func DeleteCinemas(c *gin.Context) {
+	id := c.Param("id")
+	result := config.DB.Delete(&models.Cinemas{}, id)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas deleted succefully"})
+}
