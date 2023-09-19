@@ -14,6 +14,9 @@ func ManagerRoutes(c *gin.Engine) {
 
 		//Screen Management
 		screen := Manager.Group("/screen")
+		screen.GET("", auth.ManagerAuth, controller.GetScreenList)
 		screen.POST("/add", auth.ManagerAuth, controller.AddScreen)
+		screen.PUT("/edit/:id", auth.ManagerAuth, controller.EditScreen)
+		screen.DELETE("/delete/:id", auth.ManagerAuth, controller.DeleteScreen)
 	}
 }

@@ -144,7 +144,7 @@ func AddScreenFormat(c *gin.Context) {
 	}
 
 	//checking the format already exists
-	search := config.DB.First(&models.ScreenFormat{ScreenType: format.ScreenType, SoundSystem: format.SoundSystem})
+	search := config.DB.Where("screen_type = ? AND sound_system = ?", format.ScreenType, format.SoundSystem).First(&models.ScreenFormat{})
 	if search.RowsAffected != 0 {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Format already exists"})
 		return
