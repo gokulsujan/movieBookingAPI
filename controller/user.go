@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
@@ -123,8 +124,9 @@ func Userlogin(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid Credentials"})
 		return
 	}
+	fmt.Println(user.Password + " " + logincred.Password)
 	passMatch := HashToPass(user.Password, logincred.Password)
-	if passMatch {
+	if !passMatch {
 		// Passwords do not match
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid password"})
 		return

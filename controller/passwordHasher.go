@@ -13,11 +13,6 @@ func PassToHash(pass string) ([]byte, error) {
 }
 
 func HashToPass(hashed string, pass string) bool {
-	hashedPass := []byte(hashed)
-	err := bcrypt.CompareHashAndPassword(hashedPass, []byte(pass))
-	if err != nil {
-		// Passwords do not match
-		return false
-	}
-	return true
+	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(pass))
+	return err == nil
 }
