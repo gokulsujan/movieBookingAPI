@@ -17,5 +17,6 @@ func main() {
 
 	routes.UserRoutes(r)
 	routes.AdminRoutes(r)
+	routes.ManagerRoutes(r)
 	r.Run()
 }

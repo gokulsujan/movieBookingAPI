@@ -2,100 +2,93 @@ package controller
 
 import (
 	"net/http"
+	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AddManager(c *gin.Context) {
+func ManagerLogin(c *gin.Context) {
+	var loginCred models.LoginCredentials
 	var manager models.Manager
-	if err := c.ShouldBindJSON(&manager); err != nil {
+	if err := c.ShouldBindJSON(&loginCred); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
 
-	hashedPass, err := PassToHash(manager.Password)
+	result := config.DB.Where("username = ? OR email = ?", loginCred.Username, loginCred.Username).First(&manager)
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Invalid Credentials"})
+		return
+	}
+
+	passMatch := HashToPass(manager.Password, loginCred.Password)
+	if !passMatch {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Incorrect Password"})
+		return
+	}
+
+	token, err := auth.CreateToken(manager.Username, "manager")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Status": "False",
-			"Error":  "Hashing password error",
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
-	manager.Password = string(hashedPass)
-
-	// checking the username already exists or not
-	searchUsername := config.DB.First(&models.Manager{}, "Username=?", manager.Username)
-	if searchUsername.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Username already exists for the manager role"})
-		return
-	}
-
-	// checking the email already exists or not
-	searchEmail := config.DB.First(&models.Manager{}, "Email=?", manager.Email)
-	if searchEmail.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Email already exists for the manager role"})
-		return
-	}
-
-	// checking already a manager assigned to the selected cinemas or not
-	searchCinemas := config.DB.First(&models.Manager{}, "cinemas_id=?", manager.CinemasId)
-	if searchCinemas.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Already another manager assigned to the selected cinemas"})
-		return
-	}
-
-	result := config.DB.Create(&manager)
-	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
-		return
-	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Manager created succesfully"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "error": token})
 }
 
-func EditManager(c *gin.Context) {
-	id := c.Param("id")
-	var manager models.Manager
-	if err := c.ShouldBindJSON(&manager); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": err.Error()})
-		return
-	}
-	// checking the username already exists or not
-	searchUsername := config.DB.Not("id = ?", id).First(&models.Manager{}, "Username=?", manager.Username)
-	if searchUsername.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Username already exists for the manager role"})
+func AddScreen(c *gin.Context) {
+	var screen models.Screen
+	if err := c.ShouldBindJSON(&screen); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
 
-	// checking the email already exists or not
-	searchEmail := config.DB.Not("id = ?", id).First(&models.Manager{}, "Email=?", manager.Email)
-	if searchEmail.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Email already exists for the manager role"})
+	//checking the screen name already exists
+	search := config.DB.First(&models.Screen{Name: screen.Name, CinemasId: screen.CinemasId})
+	if search.RowsAffected != 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Screen Name already exists for the cinemas"})
 		return
 	}
 
-	// checking already a manager assigned to the selected cinemas or not
-	searchCinemas := config.DB.Not("id = ?", id).First(&models.Manager{}, "cinemas_id=?", manager.CinemasId)
-	if searchCinemas.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Already another manager assigned to the selected cinemas"})
-		return
-	}
-	result := config.DB.Model(&models.Manager{}).Where("id = ?", id).Updates(models.Manager{Name: manager.Name, Username: manager.Username, Email: manager.Email, CinemasId: manager.CinemasId, Status: manager.Status})
+	result := config.DB.Create(&screen)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Manager details updated succefully"})
 
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen added to the cinemas"})
 }
 
-func DeleteManager(c *gin.Context) {
+func EditScreen(c *gin.Context) {
 	id := c.Param("id")
-	result := config.DB.Where("id = ?", id).Delete(&models.Manager{})
+	var screen models.Screen
+	if err := c.ShouldBindJSON(&screen); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+
+	//checking the screen name already exists
+	search := config.DB.Not("id = ?", id).First(&models.Screen{Name: screen.Name, CinemasId: screen.CinemasId})
+	if search.RowsAffected != 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Screen Name already exists for the cinemas"})
+		return
+	}
+
+	result := config.DB.Where("id = ?", id).Updates(&models.Screen{Name: screen.Name, CinemasId: screen.CinemasId, Rows: screen.Rows, Cols: screen.Cols, Premium: screen.Premium, Standard: screen.Standard, ScreenFormatId: screen.ScreenFormatId})
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Manager deleted succesfully"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen Updated"})
+}
+
+func DeleteScreen(c *gin.Context) {
+	id := c.Param("id")
+	result := config.DB.Delete(&models.Screen{}, id)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen Deleted"})
 }

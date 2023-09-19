@@ -134,3 +134,38 @@ func DeleteCinemas(c *gin.Context) {
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas deleted succefully"})
 }
+
+// Adding ScreenFormat
+func AddScreenFormat(c *gin.Context) {
+	var format models.ScreenFormat
+	if err := c.ShouldBindJSON(&format); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+
+	//checking the format already exists
+	search := config.DB.First(&models.ScreenFormat{ScreenType: format.ScreenType, SoundSystem: format.SoundSystem})
+	if search.RowsAffected != 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Format already exists"})
+		return
+	}
+
+	result := config.DB.Create(&format)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen format added"})
+
+}
+
+func ViewScreenFormat(c *gin.Context) {
+	var screenFormats []models.ScreenFormat
+
+	result := config.DB.Find(&screenFormats)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "screen-formats": screenFormats})
+}
