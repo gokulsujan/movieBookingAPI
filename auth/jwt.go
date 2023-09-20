@@ -11,7 +11,7 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func CreateToken(username string, role string) (string, error) {
+func CreateToken(username string, role string, cinemasId ...string) (string, error) {
 	//creating jwt auth token
 	secretKey := []byte(os.Getenv("jwtSuperKey"))
 	token := jwt.New(jwt.SigningMethodHS256) //newtokencreation
@@ -20,6 +20,9 @@ func CreateToken(username string, role string) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = username
 	claims["role"] = role
+	if role == "manager" {
+		claims["cinemas"] = cinemasId[0]
+	}
 	claims["exp"] = time.Now().Add(time.Hour * 2).Unix() //token expiry setting
 
 	//signing the token
@@ -56,18 +59,17 @@ func AdminAuth(c *gin.Context) {
 		if token.Valid {
 			// Token is valid, proceed with further processing
 			claims, ok := token.Claims.(jwt.MapClaims)
-			fmt.Println(claims["username"])
 			if !ok {
 				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid token"})
 				c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
 			if claims["role"] != "admin" {
-				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "not a user"})
+				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "not an admin"})
 				c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
-			c.Set("username", claims["username"].(string))
+
 			c.Next()
 			return
 		} else if ve, ok := err.(*jwt.ValidationError); ok {
@@ -115,19 +117,25 @@ func ManagerAuth(c *gin.Context) {
 		if token.Valid {
 			// Token is valid, proceed with further processing
 			claims, ok := token.Claims.(jwt.MapClaims)
-			fmt.Println(claims["username"])
 			if !ok {
 				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid token"})
 				c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
 			if claims["role"] != "manager" {
-				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "not a user"})
+				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "not a manager"})
 				c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
+			value := claims["cinemas"]
+			if cinema, ok := value.(string); ok {
+				c.Set("cinemas", cinema)
+			} else {
+				fmt.Println("Value is not a float64")
+			}
 			c.Set("username", claims["username"].(string))
 			c.Next()
+
 			return
 		} else if ve, ok := err.(*jwt.ValidationError); ok {
 			// Check the error type
@@ -173,7 +181,6 @@ func UserAuth(c *gin.Context) {
 		if token.Valid {
 			// Token is valid, proceed with further processing
 			claims, ok := token.Claims.(jwt.MapClaims)
-			fmt.Println(claims["username"])
 			if !ok {
 				c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid token"})
 				c.AbortWithStatus(http.StatusUnauthorized)

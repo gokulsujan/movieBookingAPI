@@ -14,19 +14,21 @@ func AdminRoutes(c *gin.Engine) {
 
 		//City Management
 		City := Admin.Group("/city")
-		City.GET("", controller.GetCityList)
+		City.GET("", auth.AdminAuth, controller.GetCityList)
 		City.POST("/add", auth.AdminAuth, controller.AddCity)
 		City.PUT("/edit/:id", auth.AdminAuth, controller.EditCity)
 		City.DELETE("/delete/:id", auth.AdminAuth, controller.DeleteCity)
 
 		//Cinemas Management
 		Cinemas := Admin.Group("/cinemas")
+		Cinemas.GET("/:id", auth.AdminAuth, controller.GetCinemasListFromCities)
 		Cinemas.POST("/add", auth.AdminAuth, controller.AddCinemas)
 		Cinemas.PUT("/edit/:id", auth.AdminAuth, controller.EditCinemas)
 		Cinemas.DELETE("/delete/:id", auth.AdminAuth, controller.DeleteCinemas)
 
 		//Manager role management
 		Manager := Admin.Group("/manager")
+		Manager.GET("", auth.AdminAuth, controller.GetManagerList)
 		Manager.POST("/add", auth.AdminAuth, controller.AddManager)
 		Manager.PUT("/edit/:id", auth.AdminAuth, controller.EditManager)
 		Manager.DELETE("/delete/:id", auth.AdminAuth, controller.DeleteManager)

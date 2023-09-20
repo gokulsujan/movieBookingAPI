@@ -99,3 +99,15 @@ func DeleteManager(c *gin.Context) {
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Manager deleted succesfully"})
 }
+
+func GetManagerList(c *gin.Context) {
+	var managers []models.Manager
+	result := config.DB.Preload("Cinemas").Find(&managers)
+	if result.Error != nil {
+		if result.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+			return
+		}
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "Manager List": managers})
+}

@@ -18,5 +18,10 @@ func ManagerRoutes(c *gin.Engine) {
 		screen.POST("/add", auth.ManagerAuth, controller.AddScreen)
 		screen.PUT("/edit/:id", auth.ManagerAuth, controller.EditScreen)
 		screen.DELETE("/delete/:id", auth.ManagerAuth, controller.DeleteScreen)
+
+		//Shows Management
+		shows := Manager.Group("/shows")
+		shows.GET("", auth.ManagerAuth, controller.GetRunnigMovies)
+		shows.POST("/add", auth.ManagerAuth, controller.AddShows)
 	}
 }

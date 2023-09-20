@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
@@ -29,12 +31,12 @@ func ManagerLogin(c *gin.Context) {
 		return
 	}
 
-	token, err := auth.CreateToken(manager.Username, "manager")
+	token, err := auth.CreateToken(manager.Username, "manager", strconv.FormatUint(uint64(manager.CinemasId), 10))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "error": token})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "token": token})
 }
 
 func GetScreenList(c *gin.Context) {
@@ -61,6 +63,16 @@ func AddScreen(c *gin.Context) {
 	var screen models.Screen
 	if err := c.ShouldBindJSON(&screen); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	fmt.Println(c.GetString("cinemas"))
+	managerCinemas, err := strconv.Atoi(c.GetString("cinemas"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	if screen.CinemasId != uint(managerCinemas) {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Unable to add screen to cinemas not assigned to you"})
 		return
 	}
 

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
 
@@ -133,6 +134,21 @@ func DeleteCinemas(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas deleted succefully"})
+}
+
+func GetCinemasListFromCities(c *gin.Context) {
+	city, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	var cinemas []models.Cinemas
+	result := config.DB.Preload("City").Where("city_id = ?", uint(city)).Find(&cinemas)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "Cinemas List for the city ": cinemas})
 }
 
 // Adding ScreenFormat
