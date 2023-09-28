@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"theatreManagementApp/config"
@@ -11,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type date struct {
-	Date string `json:"Chosendate"`
+type dateStrShow struct {
+	DateStr string `json:"date"`
 }
 
 func AddShows(c *gin.Context) {
@@ -58,20 +57,16 @@ func AddShows(c *gin.Context) {
 
 func GetRunnigMovies(c *gin.Context) {
 	var shows []models.Show
-	var date date
-	if err := c.ShouldBindJSON(&date); err != nil {
+	var dateStr dateStrShow
+	if err := c.ShouldBindJSON(&dateStr); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
-	fmt.Println(date.Date)
-	if date.Date == "" {
-		date.Date = time.Now().Format("2006-01-02")
-	}
-	fmt.Println(date.Date)
-	result := config.DB.Preload("Movie").Preload("Screen").Where("DATE(date) = ?", date.Date).Find(&shows)
+	result := config.DB.Preload("Movie").Preload("Screen").Preload("Screen.Cinemas").Preload("Screen.ScreenFormat").Preload("Screen.Cinemas.City").Where("DATE(date) = ?", dateStr.DateStr).Find(&shows)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "shows": shows, "date": date.Date})
+
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "shows": shows, "date": dateStr.DateStr})
 }

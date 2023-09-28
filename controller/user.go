@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
@@ -16,6 +15,10 @@ import (
 type otpCredentials struct {
 	Email string `json:"email"`
 	Otp   string `json:"otp"`
+}
+
+type dateStr struct {
+	DateStr string `json:"date"`
 }
 
 // User signup module
@@ -124,7 +127,6 @@ func Userlogin(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid Credentials"})
 		return
 	}
-	fmt.Println(user.Password + " " + logincred.Password)
 	passMatch := HashToPass(user.Password, logincred.Password)
 	if !passMatch {
 		// Passwords do not match
@@ -140,9 +142,77 @@ func Userlogin(c *gin.Context) {
 	tokenString, err := auth.CreateToken(user.Username, "user")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "token": tokenString})
+}
+
+func SelectCity(c *gin.Context) {
+	var cities []models.City
+	result := config.DB.Find(&cities)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "true", "Select City": cities})
+}
+
+func MoviesList(c *gin.Context) {
+	cityName := c.Param("city")
+	var dateStr dateStr
+	if err := c.ShouldBindJSON(&dateStr); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var city models.City
+	getCity := config.DB.Where("name ILIKE ?", "%"+cityName+"%").First(&city)
+	if getCity.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": getCity.Error})
+		return
+	}
+	var movies []models.Movies
+	result := config.DB.Distinct().Select("movies.name, movies.description, movies.duration_minute, movies.release_date").Joins("JOIN shows on movies.id = shows.movie_id").Joins("JOIN screens on screens.id = shows.screen_id").Joins("JOIN cinemas on cinemas.id = screens.cinemas_id").Where("cinemas.city_id = ? and DATE(shows.date) = ?", city.ID, dateStr.DateStr).Find(&movies)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "MoviesList": movies})
+}
+
+func CinemasList(c *gin.Context) {
+	cityName := c.Param("city")
+	var city models.City
+	getCity := config.DB.Where("name ILIKE ?", "%"+cityName+"%").First(&city)
+	if getCity.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": getCity.Error})
+		return
+	}
+	var cinemas []models.Cinemas
+	result := config.DB.Preload("City").Where("city_id = ?", city.ID).Find(&cinemas)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "CinemasList": cinemas})
+}
+
+func CinemasListOfMovies(c *gin.Context) {
+	cityName := c.Param("city")
+	movieId := c.Param("id")
+	var city models.City
+	getCity := config.DB.Where("name ILIKE ?", "%"+cityName+"%").First(&city)
+	if getCity.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": getCity.Error})
+		return
+	}
+	var cinemas []models.Cinemas
+	result := config.DB.Preload("City").Distinct().Table("cinemas").Select("cinemas.*").Joins("JOIN screens ON cinemas.id = screens.cinemas_id").Joins("JOIN shows ON screens.id = shows.screen_id").Joins("JOIN movies ON shows.movie_id = movies.id").Where("cinemas.city_id = ? AND movies.id = ? AND shows.date >= ?", city.ID, movieId, time.Now().Format("2006-01-02")).Find(&cinemas)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "CinemasList": cinemas})
 }
 
 func UserProfile(c *gin.Context) {
