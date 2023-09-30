@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
@@ -230,6 +231,45 @@ func ShowsListByCinemas(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "shows": shows})
+}
+
+// booking layout is the seating layout with booked and unbooked seats
+func BookingLayout(c *gin.Context) {
+	id := c.Param("id")
+	var show models.Show
+
+	result := config.DB.Preload("Screen").Preload("Screen.Cinemas").Preload("Screen.Cinemas.City").Preload("Screen.ScreenFormat").Preload("Movie").First(&show, id)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	var bookedSeats []models.Seat
+	result = config.DB.Table("seats").Joins("JOIN bookings ON seats.booking_id = bookings.id").Where("bookings.show_id = ?", show.ID).Find(&bookedSeats)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+
+	seatAvailability := make([][]string, show.Screen.Rows)
+	for i := range seatAvailability {
+		seatAvailability[i] = make([]string, show.Screen.Cols)
+	}
+
+	for _, seat := range bookedSeats {
+		seatAvailability[seat.SeatRow][seat.SeatCol] = "B"
+	}
+	seatLayout := make([][]string, show.Screen.Rows)
+	for row := 0; row < show.Screen.Rows; row++ {
+		seatLayout[row] = make([]string, show.Screen.Cols)
+		for col := 0; col < show.Screen.Cols; col++ {
+			if seatAvailability[row][col] == "" {
+				seatLayout[row][col] = strconv.Itoa(col + 1) // Seat column number
+			} else {
+				seatLayout[row][col] = "B"
+			}
+		}
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "Seat": seatLayout})
 }
 
 func UserProfile(c *gin.Context) {
