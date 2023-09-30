@@ -18,5 +18,6 @@ func UserRoutes(c *gin.Engine) {
 		User.GET("/cinemas/:city", auth.UserAuth, controller.CinemasList)
 		User.GET("/:city", auth.UserAuth, controller.MoviesList)
 		User.GET("/:city/:id", auth.UserAuth, controller.CinemasListOfMovies)
+		User.GET("shows/:cinemas/:id", auth.UserAuth, controller.ShowsListByCinemas)
 	}
 }

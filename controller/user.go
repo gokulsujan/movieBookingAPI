@@ -215,6 +215,23 @@ func CinemasListOfMovies(c *gin.Context) {
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "CinemasList": cinemas})
 }
 
+func ShowsListByCinemas(c *gin.Context) {
+	movie_id := c.Param("id")
+	cinemas_id := c.Param("cinemas")
+	var dateStr dateStr
+	if err := c.ShouldBindJSON(&dateStr); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	var shows []models.Show
+	result := config.DB.Preload("Screen").Preload("Screen.Cinemas").Preload("Screen.Cinemas.City").Preload("Screen.ScreenFormat").Preload("Movie").Table("shows").Joins("JOIN screens ON shows.screen_id = screens.id").Joins("JOIN cinemas ON screens.cinemas_id = cinemas.id").Joins("JOIN movies ON shows.movie_id = movies.id").Where("cinemas.id = ? AND movies.id = ? AND DATE(shows.date) = ?", cinemas_id, movie_id, dateStr.DateStr).Find(&shows)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "shows": shows})
+}
+
 func UserProfile(c *gin.Context) {
 	var user models.User
 	username := c.GetString("username")
