@@ -165,6 +165,6 @@ func BookSeats(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "booking": booking.ShowBookingData, "seats": booking.SelectedSeats})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking successfull, Payment pending go to payment", "booking": booking.ShowBookingData, "seats": booking.SelectedSeats})
 
 }
