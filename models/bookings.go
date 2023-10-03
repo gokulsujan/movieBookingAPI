@@ -9,8 +9,8 @@ type Booking struct {
 	ShowId   uint   `json:"showid" gorm:"not null"`
 	Show     Show   `gorm:"ForeignKey:ShowId"`
 	Seats    uint   `json:"seats" gorm:"not null"`
-	Status   string `json:"status" gorm:"not null"`
-	CouponId uint   `json:"coupon_code" gorm:"not null"`
+	Status   string `json:"status" gorm:"default:pending"`
+	CouponId uint   `json:"coupon_code"`
 	Coupon   Coupon `gorm:"ForeignKey:CouponId"`
 }
 
