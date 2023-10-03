@@ -11,6 +11,8 @@ func ManagerRoutes(c *gin.Engine) {
 	Manager := c.Group("/manager")
 	{
 		Manager.POST("/login", controller.ManagerLogin)
+		Manager.POST("/forget-password", controller.ManagerForgetPass)
+		Manager.POST("/change-password", controller.ChangePassword)
 
 		//Screen Management
 		screen := Manager.Group("/screen")
@@ -23,5 +25,6 @@ func ManagerRoutes(c *gin.Engine) {
 		shows := Manager.Group("/shows")
 		shows.GET("", auth.ManagerAuth, controller.GetRunnigMovies)
 		shows.POST("/add", auth.ManagerAuth, controller.AddShows)
+
 	}
 }

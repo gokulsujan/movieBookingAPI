@@ -7,13 +7,19 @@ type LoginCredentials struct {
 	Password string `json:"password"`
 }
 
+type ChangePassword struct {
+	OTP         string `json:"otp"`
+	Username    string `json:"username"`
+	NewPassword string `json:"newpassword"`
+}
+
 type Admin struct {
 	gorm.Model
 	Name     string `json:"name" gorm:"not null"`
 	Username string `json:"username" gorm:"unique;not null"`
 	Password string `json:"password" gorm:"not null"`
 	Email    string `json:"email" gorm:"unique;not null"`
-	isSuper  bool   `json:"isSuper" gorm:"default:false"`
+	IsSuper  bool   `json:"isSuper" gorm:"default:false"`
 }
 
 type Manager struct {

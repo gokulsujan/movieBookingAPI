@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,15 +41,68 @@ func ManagerLogin(c *gin.Context) {
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "token": token})
 }
 
+func ManagerForgetPass(c *gin.Context) {
+	var loginCred models.LoginCredentials
+	if err := c.ShouldBindJSON(&loginCred); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	var manager models.Manager
+	result := config.DB.Where("username = ? OR email = ?", loginCred.Username, loginCred.Username).First(&manager)
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Invalid Username/Email"})
+		return
+	}
+
+	otp := GetOTP(manager.Name, manager.Email)
+	//inserting the otp into reddis
+	err := config.ReddisClient.Set(context.Background(), "forgetPassManagerOTP"+manager.Email, otp, 1*time.Minute).Err()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": "Error inserting otp in redis client"})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Got to manager/change_password"})
+}
+
+func ChangePassword(c *gin.Context) {
+	var cred models.ChangePassword
+	if err := c.ShouldBindJSON(&cred); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	var manager models.Manager
+	result := config.DB.Where("username = ? OR email = ?", cred.Username, cred.Username).First(&manager)
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": "Invalid Username/Email"})
+		return
+	}
+
+	if !verifyOTP("forgetPassManagerOTP"+manager.Email, cred.OTP, c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid OTP"})
+		return
+	}
+
+	pass, err := PassToHash(cred.NewPassword)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+
+	result = config.DB.Model(&manager).Update("password", string(pass))
+	if result.Error != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Password Changed Succesfully"})
+}
+
 func GetScreenList(c *gin.Context) {
 	managerUsername := c.GetString("username")
 	var manager models.Manager
 	result := config.DB.Where("username = ?", managerUsername).First(&manager)
 	if result.Error != nil {
-		if result.Error != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
-			return
-		}
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
 	}
 	var screens []models.Screen
 
