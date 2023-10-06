@@ -15,6 +15,9 @@ func init() {
 func main() {
 	r := gin.Default()
 
+	// Serve HTML templates from the "templates" directory
+	r.LoadHTMLGlob("views/*.html")
+
 	routes.UserRoutes(r)
 	routes.AdminRoutes(r)
 	routes.ManagerRoutes(r)

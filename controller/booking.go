@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"theatreManagementApp/config"
@@ -13,6 +14,7 @@ import (
 type BookingDetails struct {
 	ShowBookingData models.Booking `json:"showDetails"`
 	SelectedSeats   []models.Seat  `json:"selectedSeats"`
+	CouponCode      string         `json:"coupon"`
 }
 
 func SelectCity(c *gin.Context) {
@@ -155,16 +157,33 @@ func BookSeats(c *gin.Context) {
 		return
 	}
 
+	price := 0
 	for i := range booking.SelectedSeats {
 		booking.SelectedSeats[i].BookingId = booking.ShowBookingData.ID
+		price += int(booking.SelectedSeats[i].Price)
 	}
+	couponID, err := ValidateCoupon(booking.CouponCode)
+	if err != nil {
+		booking.ShowBookingData.CouponId = 2
+	} else {
+		booking.ShowBookingData.CouponId = couponID
+	}
+
+	discountPrice := CouponDiscountPrice(booking.ShowBookingData.CouponId, price)
+	price -= discountPrice
+	fmt.Println(price, discountPrice)
 
 	bookSeatResult := config.DB.Create(&booking.SelectedSeats)
 	if bookSeatResult.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": bookSeatResult.Error.Error()})
 		return
 	}
+	go StartBookingMonitoring(booking.ShowBookingData.ID)
 
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking successfull, Payment pending go to payment", "booking": booking.ShowBookingData, "seats": booking.SelectedSeats})
-
+	razorPayOrderId, err := RazorpayOrderCreation(price, int(booking.ShowBookingData.CouponId))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking successfull, Payment pending. Wait until payment is successfull", "razorpayOrderId": razorPayOrderId})
 }
