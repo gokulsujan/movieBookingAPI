@@ -10,9 +10,34 @@ var options = {
     "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/PVR_Inox_Pictures_logo.jpg/640px-PVR_Inox_Pictures_logo.jpg",
     "order_id": "{{ .orderId }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
     "handler": function (response){
-        alert(response.razorpay_payment_id);
-        alert(response.razorpay_order_id);
-        alert(response.razorpay_signature)
+        alert(response.razorpay_order_id.booking_id)
+        const jsonData = {
+            "order_id": response.razorpay_order_id,
+            "payment_id": response.razorpay_payment_id,
+            "amount": response.amount,
+            "status": response.status,
+            "notes": {
+                "booking_id": response.booking_id
+            },
+        };
+        // Send a POST request with JSON data
+        fetch("/booking/paymentSuceess", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (response.ok) {
+            alert("Booking successfull")
+            } else {
+                alert("POST request failed")
+            }
+        })
+        .catch(error => {
+            alert("Error: "+error)
+        });
     },
     "prefill": {
         "name": "Gaurav Kumar",

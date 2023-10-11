@@ -38,7 +38,7 @@ func CreateToken(username string, role string, cinemasId ...string) (string, err
 func AdminAuth(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	if tokenString == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "No token was awailable"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "No admin token was awailable"})
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else {
@@ -96,7 +96,7 @@ func AdminAuth(c *gin.Context) {
 func ManagerAuth(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	if tokenString == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "No token was awailable"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "No manager token was awailable"})
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else {
@@ -160,7 +160,7 @@ func ManagerAuth(c *gin.Context) {
 func UserAuth(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	if tokenString == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "No token was awailable"})
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "No user token was awailable"})
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	} else {
