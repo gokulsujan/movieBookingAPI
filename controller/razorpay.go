@@ -32,7 +32,7 @@ func RazorpayOrderCreation(amt, book_id int) (string, error) {
 }
 
 func PaymentPage(c *gin.Context) {
-	id := c.Param("id")
+	id := c.DefaultQuery("show-id", "1")
 	c.HTML(http.StatusAccepted, "payments.html", gin.H{"status": "true", "orderId": id})
 }
 

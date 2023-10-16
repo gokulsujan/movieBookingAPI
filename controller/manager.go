@@ -115,11 +115,19 @@ func GetScreenList(c *gin.Context) {
 }
 
 func AddScreen(c *gin.Context) {
+	var manager models.Manager
+	username := c.GetString("username")
 	var screen models.Screen
+	getManager := config.DB.Where("username = ?", username).First(&manager)
+	if getManager.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getManager.Error.Error()})
+		return
+	}
 	if err := c.ShouldBindJSON(&screen); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
+	screen.CinemasId = manager.CinemasId
 	fmt.Println(c.GetString("cinemas"))
 	managerCinemas, err := strconv.Atoi(c.GetString("cinemas"))
 	if err != nil {

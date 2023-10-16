@@ -16,6 +16,9 @@ type BookingDetails struct {
 	SelectedSeats   []models.Seat  `json:"selectedSeats"`
 	CouponCode      string         `json:"coupon"`
 }
+type DateStruct struct {
+	Datestr string `json:"date"`
+}
 
 func SelectCity(c *gin.Context) {
 	var cities []models.City
@@ -28,7 +31,7 @@ func SelectCity(c *gin.Context) {
 }
 
 func MoviesList(c *gin.Context) {
-	cityName := c.Param("city")
+	cityName := c.DefaultQuery("city", "bengaluru")
 	var dateStr dateStr
 	if err := c.ShouldBindJSON(&dateStr); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -50,7 +53,8 @@ func MoviesList(c *gin.Context) {
 }
 
 func CinemasList(c *gin.Context) {
-	cityName := c.Param("city")
+	cityName := c.DefaultQuery("city", "bengaluru")
+	movieId := c.DefaultQuery("movie-id", "")
 	var city models.City
 	getCity := config.DB.Where("name ILIKE ?", "%"+cityName+"%").First(&city)
 	if getCity.Error != nil {
@@ -58,17 +62,34 @@ func CinemasList(c *gin.Context) {
 		return
 	}
 	var cinemas []models.Cinemas
-	result := config.DB.Preload("City").Where("city_id = ?", city.ID).Find(&cinemas)
-	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
-		return
+	if movieId == "" {
+		result := config.DB.Preload("City").Where("city_id = ?", city.ID).Find(&cinemas)
+		if result.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
+			return
+		}
+	} else {
+		result := config.DB.Preload("City").Distinct().Table("cinemas").Select("cinemas.*").Joins("JOIN screens ON cinemas.id = screens.cinemas_id").Joins("JOIN shows ON screens.id = shows.screen_id").Joins("JOIN movies ON shows.movie_id = movies.id").Where("cinemas.city_id = ? AND movies.id = ? AND shows.date >= ?", city.ID, movieId, time.Now().Format("2006-01-02")).Find(&cinemas)
+		if result.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
+			return
+		}
 	}
+
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "CinemasList": cinemas})
 }
 
 func CinemasListOfMovies(c *gin.Context) {
-	cityName := c.Param("city")
-	movieId := c.Param("id")
+	cityName := c.DefaultQuery("city", "bengaluru")
+	movieId := c.DefaultQuery("movie-id", "")
+	var showDate DateStruct
+	if err := c.ShouldBindJSON(&showDate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if showDate.Datestr == "" {
+		showDate.Datestr = time.Now().Format("2006-01-02")
+	}
 	var city models.City
 	getCity := config.DB.Where("name ILIKE ?", "%"+cityName+"%").First(&city)
 	if getCity.Error != nil {
@@ -76,7 +97,7 @@ func CinemasListOfMovies(c *gin.Context) {
 		return
 	}
 	var cinemas []models.Cinemas
-	result := config.DB.Preload("City").Distinct().Table("cinemas").Select("cinemas.*").Joins("JOIN screens ON cinemas.id = screens.cinemas_id").Joins("JOIN shows ON screens.id = shows.screen_id").Joins("JOIN movies ON shows.movie_id = movies.id").Where("cinemas.city_id = ? AND movies.id = ? AND shows.date >= ?", city.ID, movieId, time.Now().Format("2006-01-02")).Find(&cinemas)
+	result := config.DB.Preload("City").Distinct().Table("cinemas").Select("cinemas.*").Joins("JOIN screens ON cinemas.id = screens.cinemas_id").Joins("JOIN shows ON screens.id = shows.screen_id").Joins("JOIN movies ON shows.movie_id = movies.id").Where("cinemas.city_id = ? AND movies.id = ? AND shows.date >= ?", city.ID, movieId, showDate.Datestr).Find(&cinemas)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "Error": result.Error})
 		return
@@ -85,8 +106,8 @@ func CinemasListOfMovies(c *gin.Context) {
 }
 
 func ShowsListByCinemas(c *gin.Context) {
-	movie_id := c.Param("id")
-	cinemas_id := c.Param("cinemas")
+	movie_id := c.DefaultQuery("movies-id", "1")
+	cinemas_id := c.DefaultQuery("cinemas-id", "1")
 	var dateStr dateStr
 	if err := c.ShouldBindJSON(&dateStr); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -103,7 +124,7 @@ func ShowsListByCinemas(c *gin.Context) {
 
 // booking layout is the seating layout with booked and unbooked seats
 func BookingLayout(c *gin.Context) {
-	id := c.Param("id")
+	id := c.DefaultQuery("show-id", "1")
 	var show models.Show
 
 	result := config.DB.Preload("Screen").Preload("Screen.Cinemas").Preload("Screen.Cinemas.City").Preload("Screen.ScreenFormat").Preload("Movie").First(&show, id)
