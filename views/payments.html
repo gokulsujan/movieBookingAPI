@@ -3,21 +3,22 @@
 <script>
 var options = {
     "key": "rzp_test_f9bQ63CN0OS33m", // Enter the Key ID generated from the Dashboard
-    "amount": "50000", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+    "amount": "", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
     "currency": "INR",
     "name": "PVR-INOX",
     "description": "Do The booking",
     "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/PVR_Inox_Pictures_logo.jpg/640px-PVR_Inox_Pictures_logo.jpg",
     "order_id": "{{ .orderId }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
     "handler": function (response){
-        alert(response.razorpay_order_id.booking_id)
+        var booking_id = response.receipt;
+        alert(booking_id)
         const jsonData = {
             "order_id": response.razorpay_order_id,
             "payment_id": response.razorpay_payment_id,
             "amount": response.amount,
             "status": response.status,
             "notes": {
-                "booking_id": response.booking_id
+                "booking_id": booking_id
             },
         };
         // Send a POST request with JSON data

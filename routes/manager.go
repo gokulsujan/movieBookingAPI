@@ -25,6 +25,7 @@ func ManagerRoutes(c *gin.Engine) {
 		shows := Manager.Group("/shows")
 		shows.GET("", auth.ManagerAuth, controller.GetRunnigMovies)
 		shows.POST("/add", auth.ManagerAuth, controller.AddShows)
+		shows.PUT("/change_status", auth.ManagerAuth, controller.ShowStatusChange)
 
 	}
 }

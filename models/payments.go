@@ -21,3 +21,11 @@ type Coupon struct {
 	ExpiryDate string `json:"expiry_date" gorm:"not null"`
 	Status     string `json:"status" gorm:"not null"`
 }
+
+type Wallet struct {
+	gorm.Model
+	UserId uint `json:"uid" gorm:"not null"`
+	User   User
+	Amt    int    `json:"amt" gorm:"not null"`
+	Status string `json:"status" gorm:"not null"`
+}

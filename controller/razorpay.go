@@ -15,7 +15,7 @@ import (
 
 func RazorpayOrderCreation(amt, book_id int) (string, error) {
 	client := razorpay.NewClient(os.Getenv("razorPayApiId"), os.Getenv("razorPayApiPass"))
-
+	fmt.Println(book_id)
 	OrderData := map[string]interface{}{
 		"amount":   amt * 100,
 		"currency": "INR",
@@ -28,11 +28,12 @@ func RazorpayOrderCreation(amt, book_id int) (string, error) {
 
 	value := body["id"]
 	str := value.(string)
+	fmt.Println("book id " + strconv.Itoa(book_id))
 	return str, nil
 }
 
 func PaymentPage(c *gin.Context) {
-	id := c.DefaultQuery("show-id", "1")
+	id := c.DefaultQuery("razorpay-order-id", "1")
 	c.HTML(http.StatusAccepted, "payments.html", gin.H{"status": "true", "orderId": id})
 }
 

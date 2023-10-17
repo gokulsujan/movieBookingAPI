@@ -40,4 +40,5 @@ func ConnectToDB() {
 	//Payments
 	DB.AutoMigrate(&models.Payment{})
 	DB.AutoMigrate(&models.Coupon{})
+	DB.AutoMigrate(&models.Wallet{})
 }

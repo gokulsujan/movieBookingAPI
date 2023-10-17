@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"theatreManagementApp/config"
@@ -132,6 +131,10 @@ func BookingLayout(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
+	if show.Status != "confirmed" {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Bookings for this show is not available"})
+		return
+	}
 	var bookedSeats []models.Seat
 	result = config.DB.Table("seats").Joins("JOIN bookings ON seats.booking_id = bookings.id").Where("bookings.show_id = ?", show.ID).Find(&bookedSeats)
 	if result.Error != nil {
@@ -168,6 +171,12 @@ func BookSeats(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "true", "error": er.Error()})
 		return
 	}
+	var show models.Show
+	config.DB.First(&show, booking.ShowBookingData.ShowId)
+	if show.Status != "confirmed" {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Bookings for this show is not available"})
+		return
+	}
 	if booking.ShowBookingData.CouponId == 0 {
 		booking.ShowBookingData.CouponId = 2
 	}
@@ -176,6 +185,14 @@ func BookSeats(c *gin.Context) {
 	if bookResult.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": bookResult.Error.Error()})
 		return
+	}
+
+	for i := range booking.SelectedSeats {
+		checkSeat := config.DB.Where("seat_row = ? AND seat_col = ?", booking.SelectedSeats[i].SeatRow, booking.SelectedSeats[i].SeatCol).First(&models.Seat{})
+		if checkSeat.RowsAffected != 0 {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Selected seat already on a booking"})
+			return
+		}
 	}
 
 	price := 0
@@ -192,7 +209,6 @@ func BookSeats(c *gin.Context) {
 
 	discountPrice := CouponDiscountPrice(booking.ShowBookingData.CouponId, price)
 	price -= discountPrice
-	fmt.Println(price, discountPrice)
 
 	bookSeatResult := config.DB.Create(&booking.SelectedSeats)
 	if bookSeatResult.Error != nil {
@@ -201,7 +217,7 @@ func BookSeats(c *gin.Context) {
 	}
 	go StartBookingMonitoring(booking.ShowBookingData.ID)
 
-	razorPayOrderId, err := RazorpayOrderCreation(price, int(booking.ShowBookingData.CouponId))
+	razorPayOrderId, err := RazorpayOrderCreation(price, int(booking.ShowBookingData.ID))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return

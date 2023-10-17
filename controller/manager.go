@@ -163,14 +163,7 @@ func EditScreen(c *gin.Context) {
 		return
 	}
 
-	//checking the screen name already exists
-	search := config.DB.Not("id = ?", id).Where("name = ? AND cinemas_id = ?", screen.Name, screen.CinemasId).First(&models.Screen{})
-	if search.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Screen Name already exists for the cinemas"})
-		return
-	}
-
-	result := config.DB.Where("id = ?", id).Updates(&models.Screen{Name: screen.Name, CinemasId: screen.CinemasId, Rows: screen.Rows, Cols: screen.Cols, Premium: screen.Premium, Standard: screen.Standard, ScreenFormatId: screen.ScreenFormatId})
+	result := config.DB.Where("id = ?", id).Updates(&models.Screen{Name: screen.Name, Rows: screen.Rows, Cols: screen.Cols, Premium: screen.Premium, Standard: screen.Standard, ScreenFormatId: screen.ScreenFormatId})
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return

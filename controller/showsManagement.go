@@ -70,3 +70,28 @@ func GetRunnigMovies(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "shows": shows, "date": dateStr.DateStr})
 }
+
+func ShowStatusChange(c *gin.Context) {
+	type Status struct {
+		Data string `json:"status"`
+	}
+	var status Status
+	if err := c.ShouldBindJSON(&status); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	id := c.DefaultQuery("show-id", "1")
+	var show models.Show
+	getShow := config.DB.First(&show, id)
+	if getShow.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getShow.Error.Error()})
+		return
+	}
+	show.Status = status.Data
+	result := config.DB.Save(&show)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "status updated to " + status.Data})
+}
