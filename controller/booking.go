@@ -224,3 +224,41 @@ func BookSeats(c *gin.Context) {
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking successfull, Payment pending. Wait until payment is successfull", "razorpayOrderId": razorPayOrderId})
 }
+
+func BookingCancellation(c *gin.Context) {
+	id := c.DefaultQuery("book-id", "1")
+	var booking models.Booking
+	result := config.DB.Preload("Show").First(&booking, id)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	if booking.Show.Status != "confirmed" {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "unable to cancell this booking"})
+		return
+	}
+
+	//get seats
+	var seats []models.Seat
+	getSeats := config.DB.Where("booking_id = ?", booking.ID).Find(&seats)
+	if getSeats.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getSeats.Error.Error()})
+		return
+	}
+	cancelProcess := config.DB.Model(&models.Booking{}).Where("id = ?", booking.ID).Updates(&models.Booking{Status: "cancelled"})
+	if cancelProcess.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": cancelProcess.Error.Error()})
+		return
+	}
+	refundAmt := 0
+	for i := range seats {
+		refundAmt += int(seats[i].Price)
+	}
+	refundAmt -= CouponDiscountPrice(booking.CouponId, refundAmt)
+	refundProcess := config.DB.Create(&models.Wallet{UserId: booking.UserId, Amt: refundAmt, Status: "success"})
+	if refundProcess.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": refundProcess.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking Cancelled. Amoount after discount is refunded to the wallet."})
+}

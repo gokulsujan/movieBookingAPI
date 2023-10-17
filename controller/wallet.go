@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
@@ -17,6 +18,7 @@ func GetBalance(c *gin.Context) {
 		return
 	}
 	var transactions []models.Wallet
+	fmt.Println(user.ID)
 	result := config.DB.Where("user_id = ?", user.ID).Find(&transactions)
 	if result.Error != nil {
 		c.JSON(http.StatusAccepted, gin.H{"status": "false", "error": result.Error.Error()})
@@ -24,7 +26,11 @@ func GetBalance(c *gin.Context) {
 	}
 	balance := 0
 	for i := range transactions {
-		balance += transactions[i].Amt
+		if 0 < transactions[i].Amt {
+			fmt.Println(transactions[i].Amt)
+			balance += transactions[i].Amt
+		}
+
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "balance": balance})
 }
