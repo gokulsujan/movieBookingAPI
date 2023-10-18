@@ -26,10 +26,7 @@ func GetBalance(c *gin.Context) {
 	}
 	balance := 0
 	for i := range transactions {
-		if 0 < transactions[i].Amt {
-			fmt.Println(transactions[i].Amt)
-			balance += transactions[i].Amt
-		}
+		balance += transactions[i].Amt
 
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "balance": balance})
@@ -41,6 +38,10 @@ func PayWithWallet(c *gin.Context) {
 	getBooking := config.DB.First(&booking, bookingId)
 	if getBooking.Error != nil {
 		c.JSON(http.StatusAccepted, gin.H{"status": "false", "error": getBooking.Error.Error()})
+		return
+	}
+	if booking.Status == "success" {
+		c.JSON(http.StatusAccepted, gin.H{"status": "false", "message": "Payment already done for this booking"})
 		return
 	}
 	var seats []models.Seat

@@ -62,7 +62,7 @@ func GetRunnigMovies(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
-	result := config.DB.Preload("Movie").Preload("Screen").Preload("Screen.Cinemas").Preload("Screen.ScreenFormat").Preload("Screen.Cinemas.City").Where("DATE(date) = ?", dateStr.DateStr).Find(&shows)
+	result := config.DB.Preload("Movie").Preload("Screen").Preload("Screen.Cinemas").Preload("Screen.ScreenFormat").Preload("Screen.Cinemas.City").Where("DATE(date) = ? AND status = ?", dateStr.DateStr, "confirmed").Find(&shows)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return

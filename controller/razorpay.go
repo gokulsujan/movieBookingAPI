@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -38,14 +37,21 @@ func PaymentPage(c *gin.Context) {
 }
 
 func PaymentValidation(c *gin.Context) {
-	var callBackData models.RazorpayCallbackData
-	if err := json.NewDecoder(c.Request.Body).Decode(&callBackData); err != nil {
-		fmt.Println(err.Error())
+	var jsonData map[string]interface{}
+	if err := c.ShouldBindJSON(&jsonData); err != nil {
+		// Handle JSON parsing error
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// Extract custom booking ID from the callback data
-	bookingID := callBackData.OrderData.BookingID
+
+	// Extract the booking ID from the JSON data
+	bookingID, bookingIDExists := jsonData["notes"].(map[string]interface{})["booking_id"].(string)
+
+	if !bookingIDExists {
+		// Handle the absence of booking ID
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking ID not found in the request"})
+		return
+	}
 	result := config.DB.Model(&models.Booking{}).Where("id = ?", bookingID).Update("status", "success")
 	if result.Error != nil {
 		fmt.Println(result.Error.Error())

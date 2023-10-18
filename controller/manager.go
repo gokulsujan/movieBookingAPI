@@ -106,7 +106,7 @@ func GetScreenList(c *gin.Context) {
 	}
 	var screens []models.Screen
 
-	result = config.DB.Where("cinemas_id = ?", manager.CinemasId).Find(&screens)
+	result = config.DB.Preload("Cinemas").Preload("ScreenFormat").Where("cinemas_id = ?", manager.CinemasId).Find(&screens)
 	if result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return

@@ -152,7 +152,7 @@ func UserProfile(c *gin.Context) {
 	var user models.User
 	username := c.GetString("username")
 
-	result := config.DB.Select("first_name", "second_name", "email", "phone", "username").First(&user, "username = ?", username)
+	result := config.DB.Select("first_name", "second_name", "email", "phone", "username", "status").First(&user, "username = ?", username)
 	if result.RowsAffected == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Unable to get username"})
 		return

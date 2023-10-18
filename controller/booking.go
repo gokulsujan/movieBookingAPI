@@ -165,8 +165,13 @@ func BookingLayout(c *gin.Context) {
 }
 
 func BookSeats(c *gin.Context) {
+	var user models.User
+	getUser := config.DB.Where("username = ?", c.GetString("username")).First(&user)
+	if getUser.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "true", "error": getUser.Error.Error()})
+		return
+	}
 	var booking BookingDetails
-
 	if er := c.ShouldBindJSON(&booking); er != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "true", "error": er.Error()})
 		return
@@ -180,6 +185,7 @@ func BookSeats(c *gin.Context) {
 	if booking.ShowBookingData.CouponId == 0 {
 		booking.ShowBookingData.CouponId = 2
 	}
+	booking.ShowBookingData.UserId = user.ID
 
 	bookResult := config.DB.Create(&booking.ShowBookingData)
 	if bookResult.Error != nil {
@@ -234,7 +240,23 @@ func BookingCancellation(c *gin.Context) {
 		return
 	}
 	if booking.Show.Status != "confirmed" {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "unable to cancell this booking"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Unable to cancell unconfirmed show"})
+		return
+	}
+
+	if booking.Status != "success" {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Unable to cancell unconfirmed bookings"})
+		return
+	}
+
+	var user models.User
+	getUser := config.DB.Where("username = ?", c.GetString("username")).First(&user)
+	if getUser.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getUser.Error.Error()})
+		return
+	}
+	if user.ID != booking.UserId {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Unable to cancell other users booking"})
 		return
 	}
 
