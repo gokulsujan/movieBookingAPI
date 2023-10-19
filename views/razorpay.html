@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Payment</title>
+    <!-- Include Bootstrap CSS from a CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Include Font Awesome CSS from a CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script>
+        function get_date_from_timestamp(timestamp) {
+          // Extract the date from the timestamp.
+          const date = timestamp.split(' ')[0];
+          const time = timestamp.split(' ')[1];
+    
+          // Return the date in the format YYYY-MM-DD.
+          return `${date} ${time}`;
+        }
+      </script>
+    <style>
+        .movie-card {
+            background-color: #007BFF;
+            color: #fff;
+        }
+        .booking-card {
+            background-color: #28A745;
+            color: #fff;
+        }
+        .icon {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="text-center"><i class="fas fa-film icon"></i> Movie Booking</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Movie Information Card -->
+                        <div class="card mb-3 movie-card">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fas fa-film icon"></i> {{.booking.Show.Movie.Name}}</h4>
+                                <p class="card-text"><i class="far fa-calendar-alt icon"></i> Release Date: January 1, 2024</p>
+                                <p class="card-text"><i class="fas fa-info-circle icon"></i> Description: {{.booking.Show.Movie.Description}}</p>
+                                <p class="card-text"><i class="far fa-clock icon"></i> Duration: {{.booking.Show.Movie.DurationMinute}}&nbsp;minutes</p>
+                            </div>
+                        </div>
+
+                        <!-- Booking Information Card -->
+                        <div class="card mb-3 booking-card">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fas fa-ticket-alt icon"></i> Booking Information</h4>
+                                <p class="card-text"><i class="fas fa-theater-masks icon"></i> Cinemas: {{.booking.Show.Screen.Cinemas.Name}}</p>
+                                <p class="card-text"><i class="far fa-clock icon"></i> Show Time: <span id="date"></span></p>
+                                <p class="card-text"><i class="fas fa-chair icon"></i> Booked Seats: </p>
+                            </div>
+                        </div>
+
+                        <form action="/your-confirmation-endpoint" method="POST">
+                            <!-- Replace 'YOUR_ORDER_ID' with the actual order ID -->
+                            <input type="hidden" name="razorpay_order_id" value="YOUR_ORDER_ID">
+                            <!-- You can pass any other data related to the transaction here -->
+
+                            <div class="form-group">
+                                <label for="name">Name</label>
+                                <input type="text" name="name" id="name" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" name="email" id="email" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="contact">Contact Number</label>
+                                <input type="text" name="contact" id="contact" class="form-control" required>
+                            </div>
+                            <div class="text-center">
+                                <button id="rzp-button1" type="submit" class="btn btn-primary"><i class="fas fa-credit-card icon"></i> Pay Now</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        const date = get_date_from_timestamp('{{.booking.Show.Date}}');
+        // Display the date.
+        document.getElementById('date').innerHTML = date;
+        var options = {
+    "key": "rzp_test_f9bQ63CN0OS33m", // Enter the Key ID generated from the Dashboard
+    "amount": "", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+    "currency": "INR",
+    "name": "PVR-INOX",
+    "description": "Do The booking",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/PVR_Inox_Pictures_logo.jpg/640px-PVR_Inox_Pictures_logo.jpg",
+    "order_id": "{{ .orderId }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+    "handler": function (response){
+        var booking_id = "{{ .bookId }}";
+        alert(booking_id)
+        const jsonData = {
+            "order_id": response.razorpay_order_id,
+            "payment_id": response.razorpay_payment_id,
+            "amount": response.amount,
+            "status": response.status,
+            "notes": {
+                "booking_id": booking_id
+            },
+        };
+        // Send a POST request with JSON data
+        fetch("/booking/paymentSuceess", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (response.ok) {
+            alert("Booking successfull")
+            } else {
+                alert("POST request failed")
+            }
+        })
+        .catch(error => {
+            alert("Error: "+error)
+        });
+    },
+    "prefill": {
+        "name": "Gaurav Kumar",
+        "email": "gaurav.kumar@example.com",
+        "contact": "9000090000"
+    },
+    "notes": {
+        "address": "Razorpay Corporate Office"
+    },
+    "theme": {
+        "color": "#3399cc"
+    }
+};
+var rzp1 = new Razorpay(options);
+rzp1.on('payment.failed', function (response){
+        alert(response.error.code);
+        alert(response.error.description);
+        alert(response.error.source);
+        alert(response.error.step);
+        alert(response.error.reason);
+        alert(response.error.metadata.order_id);
+        alert(response.error.metadata.payment_id);
+});
+document.getElementById('rzp-button1').onclick = function(e){
+    rzp1.open();
+    e.preventDefault();
+}
+    </script>
+
+    <!-- Include Bootstrap and jQuery scripts from CDNs -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

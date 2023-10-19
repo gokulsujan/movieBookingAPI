@@ -145,7 +145,7 @@ func Userlogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "token": tokenString})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "auth-token": tokenString})
 }
 
 func UserProfile(c *gin.Context) {

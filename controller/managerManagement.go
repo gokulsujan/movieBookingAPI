@@ -51,7 +51,7 @@ func AddManager(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Manager created succesfully"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Manager created succesfully", "manager-id": manager.ID})
 }
 
 func EditManager(c *gin.Context) {

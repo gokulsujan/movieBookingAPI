@@ -33,5 +33,5 @@ func AdminLogin(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "token": tokenString})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "auth-token": tokenString})
 }

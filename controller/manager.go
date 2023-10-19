@@ -38,7 +38,7 @@ func ManagerLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "token": token})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "auth-token": token})
 }
 
 func ManagerForgetPass(c *gin.Context) {
@@ -152,7 +152,7 @@ func AddScreen(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen added to the cinemas"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen added to the cinemas", "screen-id": screen.ID})
 }
 
 func EditScreen(c *gin.Context) {

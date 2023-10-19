@@ -26,7 +26,7 @@ func AddMovies(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Movie added successfully"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Movie added successfully", "movies-id": movie.ID})
 }
 
 func EditMovies(c *gin.Context) {

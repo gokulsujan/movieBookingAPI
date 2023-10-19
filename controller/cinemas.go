@@ -29,7 +29,7 @@ func AddCity(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": city.Name + " has been added in the city list"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": city.Name + " has been added in the city list", "city-id": city.ID})
 }
 
 func GetCityList(c *gin.Context) {
@@ -103,7 +103,7 @@ func AddCinemas(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas addedd successfully"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Cinemas addedd successfully", "cinemas-id": cinemas.ID})
 }
 
 func EditCinemas(c *gin.Context) {
@@ -171,7 +171,7 @@ func AddScreenFormat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen format added"})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Screen format added", "screen-format-id": format.ID})
 
 }
 

@@ -10,7 +10,7 @@ var options = {
     "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/PVR_Inox_Pictures_logo.jpg/640px-PVR_Inox_Pictures_logo.jpg",
     "order_id": "{{ .orderId }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
     "handler": function (response){
-        var booking_id = response.receipt;
+        var booking_id = "{{ .bookId }}";
         alert(booking_id)
         const jsonData = {
             "order_id": response.razorpay_order_id,

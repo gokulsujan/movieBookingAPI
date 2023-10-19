@@ -228,7 +228,7 @@ func BookSeats(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking successfull, Payment pending. Wait until payment is successfull", "razorpayOrderId": razorPayOrderId})
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking successfull, Payment pending. Wait until payment is successfull", "razorpayOrderId": razorPayOrderId, "booking-id": booking.ShowBookingData.ID})
 }
 
 func BookingCancellation(c *gin.Context) {

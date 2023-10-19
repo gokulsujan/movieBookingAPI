@@ -48,5 +48,10 @@ func AdminRoutes(c *gin.Engine) {
 		ScreenFromat := Admin.Group("/screen-format")
 		ScreenFromat.GET("", auth.AdminAuth, controller.ViewScreenFormat)
 		ScreenFromat.POST("/add", auth.AdminAuth, controller.AddScreenFormat)
+
+		//show Management
+		Show := Admin.Group("/shows")
+		Show.GET("/holded", auth.AdminAuth, controller.GetHoldedShows)
+		Show.POST("/change-status", auth.AdminAuth, controller.ChangeStatusShowByAdmin)
 	}
 }

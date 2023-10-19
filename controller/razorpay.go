@@ -33,7 +33,24 @@ func RazorpayOrderCreation(amt, book_id int) (string, error) {
 
 func PaymentPage(c *gin.Context) {
 	id := c.DefaultQuery("razorpay-order-id", "1")
-	c.HTML(http.StatusAccepted, "payments.html", gin.H{"status": "true", "orderId": id})
+	book_id := c.DefaultQuery("book-id", "0")
+	if book_id == "0" {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "message": "Booking id is missing"})
+		return
+	}
+	var booking models.Booking
+	getBooking := config.DB.Preload("Show").Preload("Show.Movie").Preload("Show.Screen").Preload("Show.Screen.Cinemas").Preload("Show.Screen.ScreenFormat").First(&booking, book_id)
+	if getBooking.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "error": getBooking.Error.Error()})
+		return
+	}
+	var seats []models.Seat
+	getSeats := config.DB.Where("booking_id = ?", book_id).Find(&seats)
+	if getSeats.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "error": getSeats.Error.Error()})
+		return
+	}
+	c.HTML(http.StatusAccepted, "razorpay.html", gin.H{"status": "true", "orderId": id, "booking": booking, "seats": seats})
 }
 
 func PaymentValidation(c *gin.Context) {
