@@ -144,3 +144,61 @@ func ChangeStatusShowByAdmin(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{"status": true, "message": "Status updated"})
 }
+
+// refund initiater for cancelled bookings
+func InitiateRefund(c *gin.Context) {
+	id := c.DefaultQuery("show-id", "0")
+	var show models.Show
+	getShow := config.DB.Preload("Screen").Find(&show, id)
+	if getShow.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "error": getShow.Error.Error()})
+		return
+	}
+	var manager models.Manager
+	username := c.GetString("username")
+	getManager := config.DB.Where("username = ?", username).First(&manager)
+	if getManager.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "error": getManager.Error.Error()})
+		return
+	}
+	if show.Screen.CinemasId != manager.CinemasId {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": false, "message": "Show is not assigned in your cinemas"})
+		return
+	}
+	if show.Status != "cancell" {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": false, "message": "Show is not yet cancelled"})
+		return
+	}
+	var bookings []models.Booking
+	getBookings := config.DB.Where("show_id = ? And Status = ?", show.ID, "success").Find(&bookings)
+	if getBookings.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": false, "error": getBookings.Error.Error()})
+		return
+	}
+	for _, booking := range bookings {
+		booking.Status = "cancell"
+
+		var seats []models.Seat
+		getSeats := config.DB.Where("booking_id = ?", booking.ID).Find(&seats)
+		if getSeats.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getSeats.Error.Error()})
+			return
+		}
+		cancelProcess := config.DB.Model(&models.Booking{}).Where("id = ?", booking.ID).Updates(&models.Booking{Status: "cancelled"})
+		if cancelProcess.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": cancelProcess.Error.Error()})
+			return
+		}
+		refundAmt := 0
+		for i := range seats {
+			refundAmt += int(seats[i].Price)
+		}
+		refundAmt -= CouponDiscountPrice(booking.CouponId, refundAmt)
+		refundProcess := config.DB.Create(&models.Wallet{UserId: booking.UserId, Amt: refundAmt, Status: "success"})
+		if refundProcess.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": refundProcess.Error.Error()})
+			return
+		}
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": true, "message": "Refund initiated for all bookings"})
+}
