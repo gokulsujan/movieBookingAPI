@@ -13,7 +13,7 @@ go get -u gorm.io/gorm
 go get -u gorm.io/driver/postgres
 ```
 ## External Package Used
-#### Razorpay
+### Razorpay
 For Payment I have used the test case of Razorpay.
 ```
 github.com/razorpay/razorpay-go
