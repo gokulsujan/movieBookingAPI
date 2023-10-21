@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"theatreManagementApp/auth"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
@@ -164,13 +165,19 @@ func UserBookings(c *gin.Context) {
 	var user models.User
 	var bookings []models.Booking
 	username := c.GetString("username")
+	page := c.DefaultQuery("page", "1")
+	intPage, err := strconv.Atoi(page)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
 
 	result := config.DB.Select("id", "first_name", "second_name", "email", "phone", "username").First(&user, "username = ?", username)
 	if result.RowsAffected == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Unable to get username"})
 		return
 	}
-	getBookings := config.DB.Where("user_id = ?", user.ID).Preload("Show").Preload("Show.Screen").Preload("Show.Screen.Cinemas").Preload("Show.Movie").Find(&bookings)
+	getBookings := config.DB.Where("user_id = ?", user.ID).Preload("Show").Preload("Show.Screen").Preload("Show.Screen.Cinemas").Preload("Show.Movie").Order("id").Limit(5).Offset((intPage - 1) * 5).Find(&bookings)
 	if getBookings.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getBookings.Error.Error()})
 		return

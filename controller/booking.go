@@ -200,7 +200,7 @@ func BookSeats(c *gin.Context) {
 			return
 		}
 	}
-
+	booking.ShowBookingData.Seats = uint(len(booking.SelectedSeats))
 	price := 0
 	for i := range booking.SelectedSeats {
 		booking.SelectedSeats[i].BookingId = booking.ShowBookingData.ID

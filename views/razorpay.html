@@ -57,7 +57,7 @@
                                 <h4 class="card-title"><i class="fas fa-ticket-alt icon"></i> Booking Information</h4>
                                 <p class="card-text"><i class="fas fa-theater-masks icon"></i> Cinemas: {{.booking.Show.Screen.Cinemas.Name}}</p>
                                 <p class="card-text"><i class="far fa-clock icon"></i> Show Time: <span id="date"></span></p>
-                                <p class="card-text"><i class="fas fa-chair icon"></i> Booked Seats: </p>
+                                <p class="card-text"><i class="fas fa-chair icon"></i> Booked Seats: {{ range .seats}} {{ printf "%c" (add 65 .SeatRow)}}{{.SeatCol}}{{ end }}</p>
                             </div>
                         </div>
 
@@ -68,15 +68,15 @@
 
                             <div class="form-group">
                                 <label for="name">Name</label>
-                                <input type="text" name="name" id="name" class="form-control" required>
+                                <input type="text" name="name" id="name" value="{{ .booking.User.FirstName}} {{ .booking.User.SecondName}}" class="form-control" required>
                             </div>
                             <div class="form-group">
                                 <label for="email">Email</label>
-                                <input type="email" name="email" id="email" class="form-control" required>
+                                <input type="email" name="email" value="{{ .booking.User.Email }}" id="email" class="form-control" required>
                             </div>
                             <div class="form-group">
                                 <label for="contact">Contact Number</label>
-                                <input type="text" name="contact" id="contact" class="form-control" required>
+                                <input type="text" name="contact" value="{{ .booking.User.Phone }}" id="contact" class="form-control" required>
                             </div>
                             <div class="text-center">
                                 <button id="rzp-button1" type="submit" class="btn btn-primary"><i class="fas fa-credit-card icon"></i> Pay Now</button>
@@ -103,8 +103,7 @@
     "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/PVR_Inox_Pictures_logo.jpg/640px-PVR_Inox_Pictures_logo.jpg",
     "order_id": "{{ .orderId }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
     "handler": function (response){
-        var booking_id = "{{ .bookId }}";
-        alert(booking_id)
+        var booking_id = "{{ .booking.ID}}";
         const jsonData = {
             "order_id": response.razorpay_order_id,
             "payment_id": response.razorpay_payment_id,
@@ -134,9 +133,9 @@
         });
     },
     "prefill": {
-        "name": "Gaurav Kumar",
-        "email": "gaurav.kumar@example.com",
-        "contact": "9000090000"
+        "name": "{{ .booking.User.FirstName}} {{ .booking.User.SecondName}}",
+        "email": "{{ .booking.User.Email }}",
+        "contact": "{{ .booking.User.Phone }}"
     },
     "notes": {
         "address": "Razorpay Corporate Office"

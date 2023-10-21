@@ -39,7 +39,7 @@ func PaymentPage(c *gin.Context) {
 		return
 	}
 	var booking models.Booking
-	getBooking := config.DB.Preload("Show").Preload("Show.Movie").Preload("Show.Screen").Preload("Show.Screen.Cinemas").Preload("Show.Screen.ScreenFormat").First(&booking, book_id)
+	getBooking := config.DB.Preload("User").Preload("Show").Preload("Show.Movie").Preload("Show.Screen").Preload("Show.Screen.Cinemas").Preload("Show.Screen.ScreenFormat").First(&booking, book_id)
 	if getBooking.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": false, "error": getBooking.Error.Error()})
 		return
@@ -76,5 +76,5 @@ func PaymentValidation(c *gin.Context) {
 		return
 	}
 	fmt.Println("Booking succefull")
-	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking succefull"})
+	c.HTML(http.StatusAccepted, "bookingSuccess.html", gin.H{"status": "true", "message": "Booking succefull"})
 }

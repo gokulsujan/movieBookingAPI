@@ -18,7 +18,7 @@ func AddMovies(c *gin.Context) {
 	//checking the movie details already there or not
 	searchMovie := config.DB.Where("name = ? AND description = ?", movie.Name, movie.Description).First(&movie)
 	if searchMovie.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Movie already exists in the system"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Movie already exists in the system"})
 		return
 	}
 	result := config.DB.Create(&movie)
@@ -39,7 +39,7 @@ func EditMovies(c *gin.Context) {
 	//checking the movie details already there or not
 	searchMovie := config.DB.Not("id = ?", id).First(&models.Movies{}, "name = ? AND description = ?", movie.Name, movie.Description)
 	if searchMovie.RowsAffected != 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Movie already exists in the system"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Movie already exists in the system"})
 		return
 	}
 

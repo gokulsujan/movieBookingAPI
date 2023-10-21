@@ -1,6 +1,7 @@
 package main
 
 import (
+	"text/template"
 	"theatreManagementApp/config"
 	"theatreManagementApp/routes"
 
@@ -13,7 +14,20 @@ func init() {
 }
 
 func main() {
+	// Define a custom "add" function for serial numbers
+	funcMap := template.FuncMap{
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"eq": func(a, b interface{}) bool {
+			return a == b
+		},
+	}
+
 	r := gin.Default()
+
+	// Register the custom function with the template engine
+	r.SetFuncMap(funcMap)
 
 	// Serve HTML templates from the "templates" directory
 	r.LoadHTMLGlob("views/*.html")

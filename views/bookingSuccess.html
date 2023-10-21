@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful</title>
+    <!-- Include Bootstrap CSS from a CDN for styling -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .section {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="text-center">Booking Successful</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- Movie Details Card -->
+                        <div class="card section">
+                            <div class="card-header bg-primary text-white">
+                                <h3>Movie Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Movie Name:</strong> {{.MovieName}}</p>
+                                <p><strong>Release Date:</strong> {{.ReleaseDate}}</p>
+                                <p><strong>Description:</strong> {{.Description}}</p>
+                                <p><strong>Duration:</strong> {{.Duration}}</p>
+                                <p><strong>Show Time:</strong> {{.ShowTime}}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Theatre Details Card -->
+                        <div class="card section">
+                            <div class="card-header bg-success text-white">
+                                <h3>Theatre Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Theatre Name:</strong> {{.TheatreName}}</p>
+                                <p><strong>Screen:</strong> {{.Screen}}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Booked Seats Card -->
+                        <div class="card section">
+                            <div class="card-header bg-warning text-white">
+                                <h3>Booked Seats</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Booked Seats:</strong> {{.BookedSeats}}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Coupon Details Card -->
+                        <div class="card section">
+                            <div class="card-header bg-danger text-white">
+                                <h3>Coupon Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Coupon Code:</strong> {{.CouponCode}}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Details Card -->
+                        <div class="card section">
+                            <div class="card-header bg-secondary text-white">
+                                <h3>Payment Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Order ID:</strong> {{.OrderID}}</p>
+                                <p><strong>Amount Paid:</strong> ${{.Amount}}</p>
+                                <p><strong>Transaction Date:</strong> {{.TransactionDate}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

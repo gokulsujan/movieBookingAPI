@@ -19,14 +19,14 @@ func AdminLogin(c *gin.Context) {
 	var adminUser models.Admin
 	result := config.DB.First(&adminUser, "username = ?", loginCred.Username)
 	if result.RowsAffected == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid credentials"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Invalid credentials"})
 		return
 	}
 	hashedPass := []byte(adminUser.Password)
 	err := bcrypt.CompareHashAndPassword(hashedPass, []byte(loginCred.Password))
 	if err != nil {
 		// Passwords do not match
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "false", "message": "Invalid password"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"status": "false", "message": "Invalid password"})
 		return
 	}
 	tokenString, err := auth.CreateToken(adminUser.Username, "admin")
