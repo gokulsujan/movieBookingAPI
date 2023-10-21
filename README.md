@@ -28,7 +28,7 @@ BCRYPT package is used for password encryption and decryptiion.
 ```
 "golang.org/x/crypto/bcrypt"
 ```
-### Commands to run project:
+## Commands to run project:
 ```
 go run main.go
 ```
