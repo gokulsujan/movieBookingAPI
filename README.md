@@ -23,3 +23,12 @@ JSON Web Tokens are an open, industry standard RFC 7519 method for representing 
 ```
 "github.com/golang-jwt/jwt"
 ```
+### BCRYPT
+BCRYPT package is used for password encryption and decryptiion.
+```
+"golang.org/x/crypto/bcrypt"
+```
+### Commands to run project:
+```
+go run main.go
+```
