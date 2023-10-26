@@ -88,6 +88,30 @@
         </div>
     </div>
 
+    <!--Success Modal-->
+<div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="staticBackdropLabel">Booking Successfull</h5>
+        </div>
+        <div class="modal-body">
+            <center><p>You movie reservation successfully completed.</p></center>
+            <!-- Booking Information Card -->
+            <div class="card mb-3 booking-card">
+                <div class="card-body">
+                    <h4 class="card-title"><i class="fas fa-film icon"></i> {{.booking.Show.Movie.Name}}</h4>
+                    <p class="card-text"><i class="fas fa-theater-masks icon"></i> Booking ID: {{.booking.ID}}</p>
+                    <p class="card-text"><i class="fas fa-theater-masks icon"></i> Cinemas: {{.booking.Show.Screen.Cinemas.Name}}</p>
+                    <p class="card-text"><i class="far fa-clock icon"></i> Show Time: <span id="date"></span></p>
+                    <p class="card-text"><i class="fas fa-chair icon"></i> Booked Seats: {{ range .seats}} {{ printf "%c" (add 65 .SeatRow)}}{{.SeatCol}}{{ end }}</p>
+                </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <!-- Include Razorpay SDK -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
@@ -99,7 +123,7 @@
     "amount": "", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
     "currency": "INR",
     "name": "PVR-INOX",
-    "description": "Do The booking",
+    "description": "Booking for the movie {{.booking.Show.Movie.Name}} at {{.booking.Show.Screen.Cinemas.Name}}",
     "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/PVR_Inox_Pictures_logo.jpg/640px-PVR_Inox_Pictures_logo.jpg",
     "order_id": "{{ .orderId }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
     "handler": function (response){
@@ -123,7 +147,9 @@
         })
         .then(response => {
             if (response.ok) {
-            alert("Booking successfull")
+                $(document).ready(function() {
+                    $('#staticBackdrop').modal('show');
+                });
             } else {
                 alert("POST request failed")
             }

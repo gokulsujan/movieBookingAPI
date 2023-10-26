@@ -1,13 +1,16 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"theatreManagementApp/config"
 	"theatreManagementApp/models"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron/v3"
 )
 
 type BookingDetails struct {
@@ -18,6 +21,9 @@ type BookingDetails struct {
 type DateStruct struct {
 	Datestr string `json:"date"`
 }
+
+var cronJob *cron.Cron
+var cronJobMutex sync.Mutex
 
 func SelectCity(c *gin.Context) {
 	var cities []models.City
@@ -221,7 +227,28 @@ func BookSeats(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": bookSeatResult.Error.Error()})
 		return
 	}
-	go StartBookingMonitoring(booking.ShowBookingData.ID)
+	// go StartBookingMonitoring(booking.ShowBookingData.ID)
+	if cronJob == nil {
+		cronJobMutex.Lock()
+		defer cronJobMutex.Unlock()
+
+		if cronJob == nil {
+			cronJob = cron.New()
+
+			cronJob.AddFunc("*/10 * * * *", func() {
+				if booking.ShowBookingData.Status != "success" {
+					booking.ShowBookingData.Status = "cancelled"
+					config.DB.Where("booking_id = ?", booking.ShowBookingData.ID).Delete(&models.Seat{})
+					config.DB.Save(&booking.ShowBookingData)
+					fmt.Printf("Booking %d has been cancelled due to timeout\n", booking.ShowBookingData.ID)
+				}
+				cronJob.Stop()
+				return
+			})
+
+			cronJob.Start()
+		}
+	}
 
 	razorPayOrderId, err := RazorpayOrderCreation(price, int(booking.ShowBookingData.ID))
 	if err != nil {
