@@ -26,7 +26,7 @@ type Manager struct {
 	gorm.Model
 	Name      string  `json:"manager_name" gorm:"not null"`
 	Username  string  `json:"username" gorm:"unique;not null"`
-	Email     string  `json:"email", gorm:"unique;not null"`
+	Email     string  `json:"email" gorm:"unique;not null"`
 	Password  string  `json:"password" gorm:"not null"`
 	CinemasId uint    `json:"cinemas_id" gorm:"not null"`
 	Cinemas   Cinemas `gorm:"not null"`
