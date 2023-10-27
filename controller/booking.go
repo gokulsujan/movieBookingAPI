@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -227,28 +226,34 @@ func BookSeats(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": bookSeatResult.Error.Error()})
 		return
 	}
-	// go StartBookingMonitoring(booking.ShowBookingData.ID)
-	if cronJob == nil {
-		cronJobMutex.Lock()
-		defer cronJobMutex.Unlock()
+	go StartBookingMonitoring(booking.ShowBookingData.ID)
+	// if cronJob == nil {
+	// 	var bookings models.Booking
+	// 	getBookings := config.DB.First(&bookings, booking.ShowBookingData.ID)
+	// 	if getBookings.Error != nil {
+	// 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getBookings.Error.Error()})
+	// 		return
+	// 	}
+	// 	cronJobMutex.Lock()
+	// 	defer cronJobMutex.Unlock()
 
-		if cronJob == nil {
-			cronJob = cron.New()
+	// 	if cronJob == nil {
+	// 		cronJob = cron.New()
 
-			cronJob.AddFunc("*/10 * * * *", func() {
-				if booking.ShowBookingData.Status != "success" {
-					booking.ShowBookingData.Status = "cancelled"
-					config.DB.Where("booking_id = ?", booking.ShowBookingData.ID).Delete(&models.Seat{})
-					config.DB.Save(&booking.ShowBookingData)
-					fmt.Printf("Booking %d has been cancelled due to timeout\n", booking.ShowBookingData.ID)
-				}
-				cronJob.Stop()
-				return
-			})
+	// 		cronJob.AddFunc("*/1 * * * *", func() {
+	// 			if bookings.Status != "success" {
+	// 				booking.ShowBookingData.Status = "cancelled"
+	// 				config.DB.Where("booking_id = ?", booking.ShowBookingData.ID).Delete(&models.Seat{})
+	// 				config.DB.Save(&booking.ShowBookingData)
+	// 				fmt.Printf("Booking %d has been cancelled due to timeout\n", booking.ShowBookingData.ID)
+	// 			}
+	// 			cronJob.Stop()
+	// 			return
+	// 		})
 
-			cronJob.Start()
-		}
-	}
+	// 		cronJob.Start()
+	// 	}
+	// }
 
 	razorPayOrderId, err := RazorpayOrderCreation(price, int(booking.ShowBookingData.ID))
 	if err != nil {

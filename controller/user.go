@@ -166,7 +166,13 @@ func UserBookings(c *gin.Context) {
 	var bookings []models.Booking
 	username := c.GetString("username")
 	page := c.DefaultQuery("page", "1")
+	count := c.DefaultQuery("count", "5")
 	intPage, err := strconv.Atoi(page)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
+		return
+	}
+	intCount, err := strconv.Atoi(count)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": err.Error()})
 		return
@@ -177,7 +183,7 @@ func UserBookings(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "message": "Unable to get username"})
 		return
 	}
-	getBookings := config.DB.Where("user_id = ?", user.ID).Preload("Show").Preload("Show.Screen").Preload("Show.Screen.Cinemas").Preload("Show.Movie").Order("id").Limit(5).Offset((intPage - 1) * 5).Find(&bookings)
+	getBookings := config.DB.Where("user_id = ?", user.ID).Preload("Show").Preload("Show.Screen").Preload("Show.Screen.Cinemas").Preload("Show.Movie").Order("id").Limit(intCount).Offset((intPage - 1) * intCount).Find(&bookings)
 	if getBookings.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getBookings.Error.Error()})
 		return

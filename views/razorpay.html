@@ -90,7 +90,7 @@
 
     <!--Success Modal-->
 <div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="staticBackdropLabel">Booking Successfull</h5>
@@ -115,6 +115,11 @@
     <!-- Include Razorpay SDK -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
+        if ("{{.isBooked }}" == true){
+            $(document).ready(function() {
+                $('#staticBackdrop').modal('show');
+            });
+        }
         const date = get_date_from_timestamp('{{.booking.Show.Date}}');
         // Display the date.
         document.getElementById('date').innerHTML = date;

@@ -50,22 +50,23 @@ func PaymentPage(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": false, "error": getSeats.Error.Error()})
 		return
 	}
+	if booking.Status == "success" {
+		c.HTML(http.StatusAccepted, "bookingSuccess.html", gin.H{"status": "true", "orderId": id, "booking": booking, "seats": seats, "isBooked": true})
+		return
+	}
 	c.HTML(http.StatusAccepted, "razorpay.html", gin.H{"status": "true", "orderId": id, "booking": booking, "seats": seats})
 }
 
 func PaymentValidation(c *gin.Context) {
 	var jsonData map[string]interface{}
 	if err := c.ShouldBindJSON(&jsonData); err != nil {
-		// Handle JSON parsing error
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Extract the booking ID from the JSON data
 	bookingID, bookingIDExists := jsonData["notes"].(map[string]interface{})["booking_id"].(string)
 
 	if !bookingIDExists {
-		// Handle the absence of booking ID
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking ID not found in the request"})
 		return
 	}
@@ -75,6 +76,5 @@ func PaymentValidation(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Error.Error()})
 		return
 	}
-	fmt.Println("Booking succefull")
 	c.HTML(http.StatusAccepted, "bookingSuccess.html", gin.H{"status": "true", "message": "Booking succefull"})
 }
