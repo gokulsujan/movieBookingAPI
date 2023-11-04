@@ -32,3 +32,7 @@ BCRYPT package is used for password encryption and decryptiion.
 ```
 go run main.go
 ```
+# API Documentation
+```
+https://documenter.getpostman.com/view/28878998/2s9YXe8QPK
+```
