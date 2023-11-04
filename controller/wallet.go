@@ -82,3 +82,20 @@ func PayWithWallet(c *gin.Context) {
 	}
 	c.JSON(http.StatusAccepted, gin.H{"status": "true", "message": "Booking Successfull"})
 }
+
+func WalletTransactions(c *gin.Context) {
+	username := c.GetString("username")
+	var user models.User
+	getUser := config.DB.Where("username = ?", username).First(&user)
+	if getUser.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": getUser.Error.Error()})
+		return
+	}
+	var transactions []models.Wallet
+	result := config.DB.Where("user_id = ?", user.ID).Find(&transactions)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "false", "error": result.Error.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{"status": "true", "transactions": transactions})
+}

@@ -28,5 +28,6 @@ func UserRoutes(c *gin.Engine) {
 		User.POST("/wallet/payment", auth.UserAuth, controller.PayWithWallet)
 		User.POST("/booking/paymentSuceess", controller.PaymentValidation)
 		User.POST("/booking/cancellation", auth.UserAuth, controller.BookingCancellation)
+		User.GET("/wallet/transactions", auth.UserAuth, controller.WalletTransactions)
 	}
 }
